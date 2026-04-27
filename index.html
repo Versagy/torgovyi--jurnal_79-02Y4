@@ -1603,7 +1603,7 @@
           const text = lbl ? `📊 ${lbl}` : (`📊 График${t.chartUrls.length>1?' '+(i+1):''}`);
           return `<a href="${u}" target="_blank" rel="noopener" style="font-size:12px;color:#185FA5;text-decoration:none;background:#E6F1FB;padding:3px 8px;border-radius:6px">${text}</a>`;
         }).join('')}</div>`:''}
-        ${t.screenshotUrls&&t.screenshotUrls.length?`<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px">${t.screenshotUrls.map((u,i)=>`<a href="${u}" target="_blank" rel="noopener" style="font-size:12px;color:#A33B8E;text-decoration:none;background:#FBE6F3;padding:3px 8px;border-radius:6px">📸 Скрин${t.screenshotUrls.length>1?' '+(i+1):''}</a>`).join('')}</div>`:''}
+        ${t.screenshotUrls&&t.screenshotUrls.length?`<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px">${t.screenshotUrls.map((u,i)=>`<a href="${u}" target="_blank" rel="noopener" style="font-size:12px;color:#A33B8E;text-decoration:none;background:#FBE6F3;padding:3px 8px;border-radius:6px">📸 Результат${t.screenshotUrls.length>1?' '+(i+1):''}</a>`).join('')}</div>`:''}
         ${t.finalComment?`<div class="trade-final-comment">✍️ ${t.finalComment}</div>`:''}
         <div class="trade-footer">
           <div class="result-btns">
