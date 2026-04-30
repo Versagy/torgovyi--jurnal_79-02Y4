@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Спот Портфель</title>
+
+<!-- PWA -->
+<link rel="manifest" href="manifest.json" />
+<meta name="theme-color" content="#1a1a1a" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="Портфель" />
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f3; color: #1a1a1a; min-height: 100vh; }
+.wrapper { max-width: 960px; margin: 0 auto; padding: 2rem 1rem; }
+
+/* Header */
+.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; }
+.header h1 { font-size: 20px; font-weight: 600; }
+.header-badge { font-size: 12px; background: #FFF3CD; color: #856404; padding: 3px 10px; border-radius: 20px; border: 0.5px solid #FFDA6A; }
+
+/* Tabs */
+.tabs { display: flex; gap: 8px; margin-bottom: 1.5rem; border-bottom: 0.5px solid #d3d1c7; }
+.tab { padding: 8px 16px; font-size: 14px; font-weight: 500; cursor: pointer; border: none; background: none; color: #888780; border-bottom: 2px solid transparent; margin-bottom: -1px; font-family: inherit; }
+.tab.active { color: #1a1a1a; border-bottom: 2px solid #1a1a1a; }
+.section { display: none; }
+.section.active { display: block; }
+
+/* Setup cards */
+.setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+.setup-card { background: #fff; border: 0.5px solid #d3d1c7; border-radius: 12px; padding: 1.25rem; }
+.setup-card h3 { font-size: 13px; font-weight: 500; color: #888780; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.field-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+.field-row:last-child { margin-bottom: 0; }
+.field-row label { font-size: 13px; color: #5F5E5A; min-width: 140px; }
+.field-row input { flex: 1; padding: 7px 10px; font-size: 14px; border-radius: 8px; border: 0.5px solid #d3d1c7; background: #fff; color: #1a1a1a; font-family: inherit; }
+.field-row input:focus { outline: none; border-color: #1a1a1a; }
+.field-row .suffix { font-size: 13px; color: #888780; white-space: nowrap; }
+
+/* Risk groups */
+.risk-groups { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.risk-group { border-radius: 10px; padding: 1rem; border: 0.5px solid; }
+.risk-group.low    { background: #F0FFF4; border-color: #9AE6B4; }
+.risk-group.mid    { background: #FFFBEB; border-color: #FCD34D; }
+.risk-group.high   { background: #FFF5F5; border-color: #FCA5A5; }
+.risk-group-title  { font-size: 12px; font-weight: 600; margin-bottom: 8px; }
+.risk-group.low  .risk-group-title  { color: #276749; }
+.risk-group.mid  .risk-group-title  { color: #92400E; }
+.risk-group.high .risk-group-title  { color: #9B1C1C; }
+.risk-group-meta { font-size: 12px; color: #888780; margin-bottom: 8px; }
+.risk-group-sum  { font-size: 18px; font-weight: 600; margin-bottom: 10px; }
+.risk-group.low  .risk-group-sum { color: #276749; }
+.risk-group.mid  .risk-group-sum { color: #92400E; }
+.risk-group.high .risk-group-sum { color: #9B1C1C; }
+.risk-input-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+.risk-input-row label { font-size: 12px; color: #888780; min-width: 55px; }
+.risk-input-row input { flex: 1; padding: 5px 8px; font-size: 13px; border-radius: 6px; border: 0.5px solid #d3d1c7; font-family: inherit; background: #fff; }
+.risk-per-project { font-size: 12px; color: #888780; margin-top: 4px; }
+
+/* Summary bar */
+.summary-bar { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 10px; margin-bottom: 1.5rem; }
+.summary-card { background: #fff; border: 0.5px solid #d3d1c7; border-radius: 10px; padding: 12px 14px; }
+.summary-label { font-size: 11px; color: #888780; margin-bottom: 4px; }
+.summary-val { font-size: 18px; font-weight: 600; color: #1a1a1a; }
+.summary-val.green { color: #276749; }
+.summary-val.red   { color: #9B1C1C; }
+
+/* Deposit controls */
+.deposit-bar { display: flex; gap: 8px; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; }
+.deposit-bar input { padding: 7px 10px; font-size: 14px; border-radius: 8px; border: 0.5px solid #d3d1c7; font-family: inherit; width: 130px; }
+.deposit-bar select { padding: 7px 10px; font-size: 14px; border-radius: 8px; border: 0.5px solid #d3d1c7; font-family: inherit; background: #fff; }
+.btn { padding: 7px 16px; font-size: 13px; font-weight: 500; border-radius: 8px; border: 0.5px solid #b4b2a9; background: #fff; color: #1a1a1a; cursor: pointer; font-family: inherit; }
+.btn:hover { background: #f5f5f3; }
+.btn.primary { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+.btn.primary:hover { background: #333; }
+
+/* Projects */
+.group-section { margin-bottom: 2rem; }
+.group-header { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; }
+.group-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.group-header h2 { font-size: 15px; font-weight: 600; }
+.group-header .group-meta { font-size: 13px; color: #888780; }
+.group-header .btn-add-project { margin-left: auto; }
+
+.project-card { background: #fff; border: 0.5px solid #d3d1c7; border-radius: 12px; margin-bottom: 10px; overflow: hidden; transition: opacity 0.15s; }
+.project-card.dragging { opacity: 0.35; }
+.drop-indicator { display: none; height: 3px; background: #1a1a1a; border-radius: 2px; margin: -2px 8px 2px; }
+.drop-indicator-bottom { display: none; height: 3px; background: #1a1a1a; border-radius: 2px; margin: 2px 8px -2px; }
+.group-drop-zone { min-height: 40px; border-radius: 10px; border: 2px dashed transparent; transition: border-color 0.15s, background 0.15s; }
+.group-drop-zone.drag-over { border-color: #b4b2a9; background: #f5f5f3; }
+.project-header { display: flex; align-items: center; gap: 10px; padding: 12px 16px; cursor: pointer; }
+.project-name { font-size: 14px; font-weight: 500; flex: 1; }
+.project-alloc { font-size: 13px; color: #888780; }
+.project-pnl { font-size: 13px; font-weight: 500; }
+.project-pnl.pos { color: #276749; }
+.project-pnl.neg { color: #9B1C1C; }
+.project-toggle { font-size: 12px; color: #888780; }
+.project-body { border-top: 0.5px solid #ebebeb; padding: 0 16px 16px; display: none; }
+.project-body.open { display: block; }
+
+/* Current price row */
+.price-row { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 0.5px solid #ebebeb; margin-bottom: 10px; flex-wrap: wrap; }
+.price-row label { font-size: 12px; color: #888780; }
+.price-row input { padding: 5px 8px; font-size: 13px; border-radius: 6px; border: 0.5px solid #d3d1c7; font-family: inherit; width: 120px; }
+.price-stat { font-size: 12px; padding: 3px 8px; border-radius: 6px; }
+.price-stat.pos { background: #F0FFF4; color: #276749; }
+.price-stat.neg { background: #FFF5F5; color: #9B1C1C; }
+
+/* Purchases table */
+.purchases-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.purchases-table th { font-size: 11px; font-weight: 500; color: #888780; text-align: left; padding: 6px 8px; border-bottom: 0.5px solid #ebebeb; }
+.purchases-table td { padding: 7px 8px; border-bottom: 0.5px solid #f5f5f3; vertical-align: middle; }
+.purchases-table tr:last-child td { border-bottom: none; }
+.purchases-table input { padding: 4px 7px; font-size: 13px; border-radius: 6px; border: 0.5px solid #d3d1c7; font-family: inherit; width: 100%; background: #fff; }
+.purchases-table input:disabled { background: #f9f9f8; color: #888780; border-color: transparent; }
+.pct-badge { display: inline-block; font-size: 11px; padding: 2px 7px; border-radius: 12px; font-weight: 500; }
+.pct-badge.p20 { background: #EFF6FF; color: #1D4ED8; }
+.pct-badge.p30 { background: #F0FDF4; color: #15803D; }
+.pct-badge.p50 { background: #FFF7ED; color: #C2410C; }
+.bought-row { background: #f9f9f8; }
+.bought-row td { color: #888780; }
+.check-cell { text-align: center; }
+.check-cell input[type=checkbox] { width: 15px; height: 15px; accent-color: #1a1a1a; cursor: pointer; }
+.add-purchase-row td { padding: 6px 8px; }
+
+/* Tx list */
+.tx-mini { margin-top: 1rem; }
+.tx-mini-row { display: flex; align-items: center; gap: 8px; font-size: 12px; padding: 5px 0; border-bottom: 0.5px solid #f5f5f3; }
+.tx-mini-row:last-child { border-bottom: none; }
+.tx-dot-sm { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+
+/* Modal */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal { background: #fff; border-radius: 14px; padding: 1.5rem; width: 100%; max-width: 400px; margin: 1rem; }
+.modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 1.25rem; }
+.modal-field { margin-bottom: 12px; }
+.modal-field label { display: block; font-size: 12px; color: #888780; margin-bottom: 4px; }
+.modal-field input, .modal-field select { width: 100%; padding: 8px 10px; font-size: 14px; border-radius: 8px; border: 0.5px solid #d3d1c7; font-family: inherit; background: #fff; }
+.modal-btns { display: flex; gap: 8px; margin-top: 1.25rem; }
+.modal-btns button { flex: 1; padding: 9px; font-size: 14px; font-weight: 500; border-radius: 8px; cursor: pointer; font-family: inherit; }
+.modal-note { font-size: 12px; color: #888780; margin-top: 8px; line-height: 1.5; }
+
+/* Tx history */
+.tx-history { display: flex; flex-direction: column; gap: 6px; margin-top: 1rem; }
+.tx-row { display: flex; align-items: center; gap: 10px; background: #fff; border: 0.5px solid #d3d1c7; border-radius: 8px; padding: 10px 14px; font-size: 13px; }
+.tx-row-amount { font-weight: 500; }
+.tx-row-amount.pos { color: #276749; }
+.tx-row-amount.neg { color: #9B1C1C; }
+
+@media (max-width: 600px) {
+  .setup-grid { grid-template-columns: 1fr; }
+  .risk-groups { grid-template-columns: 1fr; }
+  .summary-bar { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+<div class="wrapper">
+  <div class="header">
+    <h1>Спот Портфель</h1>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="btn" id="refresh-all-btn" onclick="fetchAllPrices()" style="font-size:13px;display:flex;align-items:center;gap:5px">
+        <span id="refresh-icon">↻</span> Обновить цены
+      </button>
+      <span class="header-badge" id="header-balance">Депозит: $0</span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('portfolio')">Портфель</button>
+    <button class="tab" onclick="switchTab('setup')">Настройки</button>
+    <button class="tab" onclick="switchTab('txs')">Транзакции</button>
+    <button class="tab" onclick="switchTab('analytics')">Аналитика</button>
+  </div>
+
+  <!-- PORTFOLIO TAB -->
+  <div id="tab-portfolio" class="section active">
+    <div class="summary-bar" id="summary-bar"></div>
+    <div id="groups-container"></div>
+  </div>
+
+  <!-- SETUP TAB -->
+  <div id="tab-setup" class="section">
+    <div class="setup-grid">
+      <div class="setup-card">
+        <h3>Депозит</h3>
+        <div class="field-row">
+          <label>Начальный депозит</label>
+          <input type="number" id="s-initial" placeholder="1000" />
+          <span class="suffix">$</span>
+        </div>
+        <button class="btn primary" onclick="saveSetup()" style="width:100%;margin-top:8px">Сохранить</button>
+        <p style="font-size:11px;color:#888780;margin-top:8px">После сохранения депозит меняется только через транзакции</p>
+      </div>
+      <div class="setup-card">
+        <h3>Распределение риска</h3>
+        <div class="risk-groups" id="setup-risk-groups">
+          <!-- rendered by JS -->
+        </div>
+        <p id="risk-sum-check" style="font-size:12px;margin-top:10px"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ANALYTICS TAB -->
+  <div id="tab-analytics" class="section">
+    <div id="analytics-content"></div>
+  </div>
+
+  <!-- TXS TAB -->
+  <div id="tab-txs" class="section">
+    <div class="deposit-bar">
+      <select id="tx-type">
+        <option value="deposit">Пополнение</option>
+        <option value="withdraw">Вывод</option>
+      </select>
+      <input type="number" id="tx-amount" placeholder="Сумма ($)" />
+      <input type="text" id="tx-note" placeholder="Комментарий (необязательно)" style="flex:1;min-width:150px" />
+      <button class="btn primary" onclick="addTx()">Добавить</button>
+    </div>
+    <div class="tx-history" id="tx-history"></div>
+  </div>
+</div>
+
+<!-- Modal: добавить проект -->
+<div class="modal-overlay" id="modal-project">
+  <div class="modal">
+    <h3>Новый проект</h3>
+    <div class="modal-field">
+      <label>Название актива (тикер для Bybit: BTCUSDT)</label>
+      <input type="text" id="mp-name" placeholder="BTC, ETH, SOL..." oninput="document.getElementById('mp-dup-warn').style.display='none'" />
+      <div id="mp-dup-warn" style="display:none;font-size:12px;color:#9B1C1C;margin-top:4px;background:#FFF5F5;padding:6px 8px;border-radius:6px;border:0.5px solid #FCA5A5"></div>
+    </div>
+    <div class="modal-field">
+      <label>Группа риска</label>
+      <select id="mp-group" onchange="onMpGroupChange()">
+        <option value="low">Надёжные</option>
+        <option value="mid">Среднерисковые</option>
+        <option value="high">Высокорисковые</option>
+      </select>
+    </div>
+    <div class="modal-field">
+      <label>Биржа закупки</label>
+      <div style="position:relative" id="exch-wrap-mp">
+        <div id="exch-selected-mp" onclick="toggleExchMp()"
+          style="display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;border:0.5px solid #d3d1c7;background:#fff;cursor:pointer;user-select:none;font-size:14px">
+          <img id="exch-icon-mp" src="https://www.google.com/s2/favicons?domain=bybit.com&sz=32" style="width:16px;height:16px" />
+          <span id="exch-txt-mp">Bybit</span>
+          <span style="margin-left:auto;color:#888780;font-size:12px">▾</span>
+        </div>
+        <div id="exch-dd-mp" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:#fff;border:0.5px solid #d3d1c7;border-radius:8px;z-index:200;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.08)">
+        </div>
+      </div>
+      <input type="hidden" id="mp-exchange" value="Bybit" />
+    </div>
+    <div class="modal-field">
+      <label>Бюджет проекта ($) <span style="color:#888780;font-weight:400">— оставь пустым для автоматического</span></label>
+      <input type="number" id="mp-budget" placeholder="Авто" oninput="onMpBudgetInput()" />
+    </div>
+    <p class="modal-note" id="mp-note"></p>
+    <div class="modal-btns">
+      <button class="btn primary" onclick="confirmAddProject()">Создать</button>
+      <button class="btn" onclick="closeModal('modal-project')">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: редактировать откупленную закупку -->
+<div class="modal-overlay" id="modal-editbought">
+  <div class="modal">
+    <h3>Редактировать закупку</h3>
+    <div class="modal-field">
+      <label>Дата</label>
+      <input type="date" id="eb-date" />
+    </div>
+    <div class="modal-field">
+      <label>Цена закупки ($)</label>
+      <input type="number" id="eb-price" placeholder="0.00" />
+    </div>
+    <div class="modal-field">
+      <label>Сумма закупки ($)</label>
+      <input type="number" id="eb-amount" placeholder="0.00" />
+    </div>
+    <div class="modal-btns">
+      <button class="btn primary" onclick="saveEditBought()">Сохранить</button>
+      <button class="btn" onclick="closeModal('modal-editbought')">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-sell">
+  <div class="modal">
+    <h3>Продать</h3>
+    <div id="sell-info" style="font-size:13px;color:#888780;margin-bottom:1rem"></div>
+    <div class="modal-field">
+      <label>Цена продажи ($)</label>
+      <input type="number" id="sell-price" placeholder="0.00" oninput="updateSellPreview()" />
+    </div>
+    <div class="modal-field">
+      <label>Продаю % от позиции</label>
+      <input type="number" id="sell-pct" placeholder="100" min="1" max="100" value="100" oninput="updateSellPreview()" />
+    </div>
+    <div id="sell-preview" style="margin-bottom:1rem"></div>
+    <div class="modal-btns">
+      <button class="btn primary" onclick="confirmSell()">Подтвердить продажу</button>
+      <button class="btn" onclick="closeModal('modal-sell')">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── STATE ───────────────────────────────────────────
+let state = {
+  initialDeposit: 0,
+  txs: [],
+  risk: {
+    low:  { pct: 30, count: 2 },
+    mid:  { pct: 60, count: 20 },
+    high: { pct: 10, count: 5 },
+  },
+  projects: [],  // [{id, name, group, ticker, customBudget, currentPrice, purchases, sells}]
+  nextProjectId: 1,
+  nextTxId: 1,
+};
+
+// Активная продажа
+let sellContext = null; // {projectId}
+
+const GROUP_LABELS = { low: 'Надёжные', mid: 'Среднерисковые', high: 'Высокорисковые' };
+const GROUP_COLORS = { low: '#276749', mid: '#92400E', high: '#9B1C1C' };
+const GROUP_DOTS   = { low: '#48BB78', mid: '#F6AD55', high: '#FC8181' };
+const DEFAULT_PCTS = [20, 30, 50];
+
+// ─── PERSIST ─────────────────────────────────────────
+function save() { localStorage.setItem('spot-portfolio', JSON.stringify(state)); }
+function load() {
+  try {
+    const d = localStorage.getItem('spot-portfolio');
+    if (d) state = JSON.parse(d);
+  } catch(e) {}
+}
+
+// ─── CALCULATIONS ─────────────────────────────────────
+function totalDeposit() {
+  return state.initialDeposit + state.txs.reduce((s, t) => s + (t.type === 'deposit' ? t.amount : -t.amount), 0);
+}
+
+function groupBudget(group) {
+  return totalDeposit() * (state.risk[group].pct / 100);
+}
+
+function projectBudget(group, projectId) {
+  // Если проект имеет кастомный бюджет — используем его
+  if (projectId) {
+    const p = state.projects.find(x => x.id === projectId);
+    if (p && p.customBudget) return parseFloat(p.customBudget);
+  }
+  const count = state.risk[group].count;
+  return count > 0 ? groupBudget(group) / count : 0;
+}
+
+function getAmount(p, pur) {
+  // Откупленная — всегда фиксированная сумма
+  if (pur.bought) return parseFloat(pur.customAmount) || 0;
+  // Кастомная сумма задана вручную — используем её
+  if (pur.customAmount !== null && pur.customAmount !== '') return parseFloat(pur.customAmount) || 0;
+  // Ручная закупка без % — нет авторасчёта
+  if (pur.pct === null) return 0;
+
+  // Умный перерасчёт: бюджет делится пропорционально только между открытыми закупками
+  const budget = projectBudget(p.group, p.id);
+  const invested = projectTotalInvested(p); // уже откуплено
+  const remaining = budget - invested;      // осталось распределить
+
+  // Открытые закупки с процентами
+  const openPurchases = p.purchases.filter(x => !x.bought && x.pct !== null && x.customAmount === null);
+  const totalOpenPct  = openPurchases.reduce((s, x) => s + (x.pct || 0), 0);
+
+  if (totalOpenPct === 0) return 0;
+  // Доля этой закупки среди открытых
+  return remaining * (pur.pct / totalOpenPct);
+}
+
+function projectTotalInvested(p) {
+  return p.purchases.filter(x => x.bought).reduce((s, x) => s + getAmount(p, x), 0);
+}
+
+function totalInvestedAll() {
+  return state.projects.reduce((s, p) => s + projectTotalInvested(p), 0);
+}
+
+function totalSellRevenue() {
+  return state.projects.reduce((s, p) => s + (p.sells||[]).reduce((ss, x) => ss + (parseFloat(x.revenue)||0), 0), 0);
+}
+
+function freeCash() {
+  // Свободно = депозит - инвестировано + выручка от продаж (возвращается в кассу)
+  return totalDeposit() - totalInvestedAll() + totalSellRevenue();
+}
+
+function projectAvgPrice(p) {
+  const bought = p.purchases.filter(x => x.bought && parseFloat(x.price) > 0);
+  if (!bought.length) return null;
+  const totalAmt   = bought.reduce((s, x) => s + getAmount(p, x), 0);
+  const totalCoins = bought.reduce((s, x) => s + getAmount(p, x) / parseFloat(x.price), 0);
+  return totalCoins > 0 ? totalAmt / totalCoins : null;
+}
+
+function projectTotalCoins(p) {
+  const bought = p.purchases.filter(x => x.bought && parseFloat(x.price) > 0);
+  return bought.reduce((s, x) => s + getAmount(p, x) / parseFloat(x.price), 0);
+}
+
+function projectSoldCoins(p) {
+  return (p.sells || []).reduce((s, x) => s + (parseFloat(x.coins) || 0), 0);
+}
+
+function projectRemainingCoins(p) {
+  return projectTotalCoins(p) - projectSoldCoins(p);
+}
+
+function projectSellsPnl(p) {
+  return (p.sells || []).reduce((s, x) => s + (parseFloat(x.pnlUsd) || 0), 0);
+}
+
+function projectPnl(p) {
+  const cur = parseFloat(p.currentPrice);
+  if (!cur) return null;
+  const remaining = projectRemainingCoins(p);
+  const invested  = projectTotalInvested(p);
+  const soldPnl   = projectSellsPnl(p);
+  if (!invested) return null;
+  const avg = projectAvgPrice(p);
+  if (!avg) return null;
+  const curVal = remaining * cur;
+  const costOfRemaining = remaining * avg;
+  const unrealised = curVal - costOfRemaining;
+  return { usd: unrealised + soldPnl, pct: ((unrealised + soldPnl) / invested * 100), unrealised, realised: soldPnl };
+}
+
+// ─── SETUP TAB ───────────────────────────────────────
+function renderSetup() {
+  document.getElementById('s-initial').value = state.initialDeposit || '';
+  const container = document.getElementById('setup-risk-groups');
+  container.innerHTML = ['low','mid','high'].map(g => {
+    const r = state.risk[g];
+    const budget  = groupBudget(g);
+    const perProj = projectBudget(g);
+    const actual  = state.projects.filter(p => p.group === g).length;
+    const tooFew  = r.count < actual;
+    return `<div class="risk-group ${g}">
+      <div class="risk-group-title">${GROUP_LABELS[g]}</div>
+      <div class="risk-group-sum">$${budget.toFixed(0)}</div>
+      <div class="risk-input-row">
+        <label>Доля %</label>
+        <input type="number" value="${r.pct}" min="0" max="100" oninput="onRiskInput('${g}','pct',this.value)" />
+      </div>
+      <div class="risk-input-row">
+        <label>Проектов</label>
+        <input type="number" value="${r.count}" min="${actual}" onchange="onRiskInput('${g}','count',this.value)"
+          style="${tooFew ? 'border-color:#E24B4A;background:#FFF5F5' : ''}" />
+      </div>
+      ${tooFew ? `<div style="font-size:11px;color:#9B1C1C;margin-top:2px">⚠ Создано ${actual} проектов — нельзя указать меньше</div>` : ''}
+      ${actual > 0 ? `<div style="font-size:11px;color:#888780;margin-top:2px">Создано: ${actual} из ${r.count}</div>` : ''}
+      <div class="risk-per-project">На 1 проект: $${perProj.toFixed(2)}</div>
+    </div>`;
+  }).join('');
+  const total = state.risk.low.pct + state.risk.mid.pct + state.risk.high.pct;
+  const check = document.getElementById('risk-sum-check');
+  check.textContent = `Сумма долей: ${total}%${total !== 100 ? ' ⚠️ должно быть 100%' : ' ✓'}`;
+  check.style.color = total === 100 ? '#276749' : '#9B1C1C';
+}
+
+function onRiskInput(group, field, val) {
+  const v = parseFloat(val) || 0;
+  if (field === 'count') {
+    const actual = state.projects.filter(p => p.group === group).length;
+    if (v < actual) {
+      // Не даём занизить — восстанавливаем минимум
+      state.risk[group][field] = actual;
+      renderSetup();
+      return;
+    }
+  }
+  state.risk[group][field] = v;
+  renderSetup();
+}
+
+function saveSetup() {
+  const init = parseFloat(document.getElementById('s-initial').value);
+  if (!state.initialDeposit && init > 0) {
+    state.initialDeposit = init;
+  }
+  const total = state.risk.low.pct + state.risk.mid.pct + state.risk.high.pct;
+  if (total !== 100) { alert('Сумма долей должна быть 100%'); return; }
+  save();
+  renderAll();
+  switchTab('portfolio');
+}
+
+// ─── TRANSACTIONS ─────────────────────────────────────
+function addTx() {
+  const type   = document.getElementById('tx-type').value;
+  const amount = parseFloat(document.getElementById('tx-amount').value);
+  const note   = document.getElementById('tx-note').value.trim();
+  if (!amount || amount <= 0) { alert('Введи сумму'); return; }
+  state.txs.unshift({ id: state.nextTxId++, type, amount, note, date: new Date().toLocaleDateString('ru') });
+  document.getElementById('tx-amount').value = '';
+  document.getElementById('tx-note').value = '';
+  save(); renderAll();
+}
+
+function renderTxs() {
+  const el = document.getElementById('tx-history');
+  if (!state.txs.length) { el.innerHTML = '<div style="font-size:14px;color:#888780;padding:1rem 0">Транзакций пока нет</div>'; return; }
+  el.innerHTML = state.txs.map(t => {
+    const isPos = t.type === 'deposit';
+    return `<div class="tx-row">
+      <span style="width:8px;height:8px;border-radius:50%;background:${isPos?'#48BB78':'#FC8181'};flex-shrink:0;display:inline-block"></span>
+      <span style="font-size:13px;color:${isPos?'#276749':'#9B1C1C'};font-weight:500;min-width:80px">${isPos?'Пополнение':'Вывод'}</span>
+      <span class="tx-row-amount ${isPos?'pos':'neg'}">${isPos?'+':'-'}$${t.amount.toLocaleString()}</span>
+      ${t.note ? `<span style="font-size:12px;color:#888780">${t.note}</span>` : ''}
+      <span style="margin-left:auto;font-size:12px;color:#888780">${t.date}</span>
+    </div>`;
+  }).join('');
+}
+
+// ─── PROJECTS ─────────────────────────────────────────
+function onMpGroupChange() {
+  const group = document.getElementById('mp-group').value;
+  const custom = parseFloat(document.getElementById('mp-budget').value);
+  const auto = projectBudget(group);
+  const budget = custom || auto;
+  document.getElementById('mp-note').textContent =
+    `Авто бюджет: $${auto.toFixed(2)} · Закупки: $${(budget*0.2).toFixed(2)} / $${(budget*0.3).toFixed(2)} / $${(budget*0.5).toFixed(2)}`;
+}
+
+function onMpBudgetInput() { onMpGroupChange(); }
+
+function openAddProjectModal(group) {
+  document.getElementById('mp-name').value   = '';
+  document.getElementById('mp-group').value  = group;
+  document.getElementById('mp-budget').value = '';
+  const existing = state.projects.filter(p => p.group === group).length;
+  const newBudget = groupBudget(group) / (existing + 1);
+  document.getElementById('mp-note').textContent =
+    `Авто бюджет: $${newBudget.toFixed(2)} · Закупки: $${(newBudget*0.2).toFixed(2)} / $${(newBudget*0.3).toFixed(2)} / $${(newBudget*0.5).toFixed(2)}`;
+  document.getElementById('modal-project').classList.add('open');
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function confirmAddProject() {
+  const name   = document.getElementById('mp-name').value.trim();
+  const group  = document.getElementById('mp-group').value;
+  const budget = parseFloat(document.getElementById('mp-budget').value) || null;
+  if (!name) { alert('Введи название'); return; }
+
+  // Проверка дубликата
+  const duplicate = state.projects.find(p => p.name.toLowerCase() === name.toLowerCase());
+  const warnEl = document.getElementById('mp-dup-warn');
+  if (duplicate) {
+    warnEl.style.display = 'block';
+    warnEl.textContent   = `⚠ Проект "${duplicate.name}" уже существует (${GROUP_LABELS[duplicate.group]})`;
+    return;
+  }
+  warnEl.style.display = 'none';
+
+  const purchases = DEFAULT_PCTS.map((pct, i) => ({
+    id: Date.now() + i,
+    pct, date: '', price: '', customAmount: null, bought: false,
+  }));
+
+  const exchange = document.getElementById('mp-exchange').value;
+  const ticker   = name.toUpperCase().replace(/[^A-Z]/g, '') + 'USDT';
+  state.projects.push({
+    id: state.nextProjectId++, name, group, ticker, exchange,
+    customBudget: budget, currentPrice: '',
+    purchases, sells: [],
+  });
+
+  const groupCount = state.projects.filter(p => p.group === group).length;
+  if (!budget && groupCount > state.risk[group].count) {
+    state.risk[group].count = groupCount;
+  }
+
+  closeModal('modal-project');
+  save(); renderAll();
+}
+
+function toggleProject(id) {
+  const body = document.getElementById(`proj-body-${id}`);
+  const icon = document.getElementById(`proj-icon-${id}`);
+  if (body) {
+    body.classList.toggle('open');
+    if (icon) icon.textContent = body.classList.contains('open') ? '▲' : '▼';
+  }
+}
+
+// Живой пересчёт монет при вводе цены/суммы + DCA подсказка для доп. закупок
+function liveCoins(input, projectId, purchaseId) {
+  const row = input.closest('tr');
+  if (!row) return;
+  const priceInput  = row.querySelector('input[placeholder="Цена"]');
+  const amountInput = row.querySelector('input[placeholder="Сумма"]');
+  const coinsCell   = document.getElementById(`coins-${projectId}-${purchaseId}`);
+  const dcaHint     = document.getElementById(`dca-${projectId}-${purchaseId}`);
+  const price  = parseFloat(priceInput?.value);
+  const amount = parseFloat(amountInput?.value);
+  const p      = state.projects.find(x => x.id === projectId);
+  const label  = p ? p.name : 'монет';
+  if (coinsCell) {
+    coinsCell.textContent = (price > 0 && amount > 0) ? (amount / price).toFixed(6) + ' ' + label : '—';
+  }
+  if (dcaHint && price > 0 && p) {
+    const dcaAmt = dcaKeepAvgAmount(p, price);
+    if (dcaAmt !== null) {
+      dcaHint.textContent = `Для снижения средней до $${price}: $${dcaAmt.toFixed(2)}`;
+      dcaHint.style.display = 'block';
+    } else {
+      dcaHint.style.display = 'none';
+    }
+  }
+}
+
+function updateCurrentPrice(projectId, val) {
+  const p = state.projects.find(x => x.id === projectId);
+  if (!p) return;
+  p.currentPrice = val;
+  save(); rerenderProject(projectId);
+}
+
+function updateTicker(projectId, val) {
+  const p = state.projects.find(x => x.id === projectId);
+  if (p) { p.ticker = val.trim().toUpperCase(); save(); }
+}
+
+const EXCHANGE_ICONS = {
+  'Bybit': 'https://www.google.com/s2/favicons?domain=bybit.com&sz=32',
+  'Bitget': 'https://www.google.com/s2/favicons?domain=bitget.com&sz=32',
+  'Binance': 'https://www.google.com/s2/favicons?domain=binance.com&sz=32',
+  'OKX': 'https://www.google.com/s2/favicons?domain=okx.com&sz=32',
+  'HTX': 'https://www.google.com/s2/favicons?domain=htx.com&sz=32',
+  'KuCoin': 'https://www.google.com/s2/favicons?domain=kucoin.com&sz=32',
+  'Gate.io': 'https://www.google.com/s2/favicons?domain=gate.io&sz=32',
+  'MEXC': 'https://www.google.com/s2/favicons?domain=mexc.com&sz=32',
+  'Coinbase': 'https://www.google.com/s2/favicons?domain=coinbase.com&sz=32',
+  'Kraken': 'https://www.google.com/s2/favicons?domain=kraken.com&sz=32',
+};
+function exchIcon(name) { return EXCHANGE_ICONS[name] || ''; }
+
+// ─── DRAG & DROP ──────────────────────────────────────
+let dragProjectId = null;
+let _dragAllowed  = false;
+
+function onDragStart(e, projectId) {
+  if (!_dragAllowed) { e.preventDefault(); return; }
+  dragProjectId = projectId;
+  const card = e.target.closest('.project-card') || e.target;
+  setTimeout(() => card.classList.add('dragging'), 0);
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function onDragEnd(e) {
+  _dragAllowed = false;
+  const card = e.target.closest('.project-card') || e.target;
+  card.classList.remove('dragging');
+  // Снимаем все индикаторы
+  document.querySelectorAll('.drop-indicator').forEach(el => el.style.display = 'none');
+  ['low','mid','high'].forEach(g => document.getElementById(`drop-${g}`)?.classList.remove('drag-over'));
+}
+
+function onDragOver(e, group) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+
+  // Находим ближайшую карточку снизу курсора внутри этой группы
+  const zone = document.getElementById(`drop-${group}`);
+  if (!zone) return;
+
+  // Сбрасываем все индикаторы в этой зоне
+  zone.querySelectorAll('.drop-indicator').forEach(el => el.style.display = 'none');
+
+  const cards = [...zone.querySelectorAll('.project-card:not(.dragging)')];
+  const after = cards.find(card => {
+    const rect = card.getBoundingClientRect();
+    return e.clientY < rect.top + rect.height / 2;
+  });
+
+  if (after) {
+    const ind = after.querySelector('.drop-indicator');
+    if (ind) ind.style.display = 'block';
+  } else if (cards.length > 0) {
+    // Курсор ниже всех карточек — показываем индикатор после последней
+    const ind = cards[cards.length - 1].querySelector('.drop-indicator-bottom');
+    if (ind) ind.style.display = 'block';
+  } else {
+    zone.classList.add('drag-over');
+  }
+}
+
+function onDragLeave(e, group) {
+  const zone = document.getElementById(`drop-${group}`);
+  if (zone && !zone.contains(e.relatedTarget)) {
+    zone.classList.remove('drag-over');
+    zone.querySelectorAll('.drop-indicator').forEach(el => el.style.display = 'none');
+  }
+}
+
+function onDrop(e, targetGroup) {
+  e.preventDefault();
+  const zone = document.getElementById(`drop-${targetGroup}`);
+  zone?.classList.remove('drag-over');
+  zone?.querySelectorAll('.drop-indicator').forEach(el => el.style.display = 'none');
+  if (!dragProjectId) return;
+
+  const dragP = state.projects.find(x => x.id === dragProjectId);
+  if (!dragP) { dragProjectId = null; return; }
+
+  // Найти карточку перед которой бросаем
+  const cards = [...(zone?.querySelectorAll('.project-card:not(.dragging)') || [])];
+  const afterCard = cards.find(card => {
+    const rect = card.getBoundingClientRect();
+    return e.clientY < rect.top + rect.height / 2;
+  });
+
+  const afterId = afterCard ? parseInt(afterCard.dataset.projectId) : null;
+
+  // Убираем перетаскиваемый проект из массива
+  const withoutDrag = state.projects.filter(x => x.id !== dragProjectId);
+
+  if (afterId !== null) {
+    const insertIdx = withoutDrag.findIndex(x => x.id === afterId);
+    withoutDrag.splice(insertIdx, 0, dragP);
+  } else {
+    // Вставляем в конец группы
+    const lastInGroupIdx = withoutDrag.reduce((acc, x, i) => x.group === targetGroup ? i : acc, -1);
+    withoutDrag.splice(lastInGroupIdx + 1, 0, dragP);
+  }
+
+  dragP.group = targetGroup;
+  state.projects = withoutDrag;
+
+  ['low','mid','high'].forEach(g => {
+    const actual = state.projects.filter(x => x.group === g).length;
+    if (state.risk[g].count < actual) state.risk[g].count = actual;
+  });
+
+  dragProjectId = null;
+  save(); renderPortfolio();
+}
+
+// ─── СМЕНА БИРЖИ В ПРОЕКТЕ ────────────────────────────
+function toggleExchProject(projectId) {
+  const dd = document.getElementById(`exch-dd-${projectId}`);
+  const p  = state.projects.find(x => x.id === projectId);
+  if (!dd || !p) return;
+  if (dd.style.display !== 'none') { dd.style.display = 'none'; return; }
+  dd.innerHTML = EXCHANGES_LIST.map(name => `
+    <div onclick="selectExchProject(${projectId},'${name}')"
+      style="display:flex;align-items:center;gap:8px;padding:8px 12px;font-size:13px;cursor:pointer;background:${name===p.exchange?'#f5f5f3':'#fff'}"
+      onmouseover="this.style.background='#f5f5f3'" onmouseout="this.style.background='${name===p.exchange?'#f5f5f3':'#fff'}'">
+      <img src="${exchIcon(name)}" style="width:14px;height:14px" />${name}
+    </div>`).join('');
+  dd.style.display = 'block';
+}
+
+function selectExchProject(projectId, name) {
+  const p = state.projects.find(x => x.id === projectId);
+  if (!p) return;
+  p.exchange = name;
+  const dd = document.getElementById(`exch-dd-${projectId}`);
+  if (dd) dd.style.display = 'none';
+  save(); rerenderProject(projectId);
+}
+
+document.addEventListener('click', e => {
+  // Закрываем все дропдауны бирж проектов при клике вне
+  document.querySelectorAll('[id^="exch-dd-"]').forEach(dd => {
+    const id = dd.id.replace('exch-dd-','');
+    const wrap = document.getElementById(`exch-wrap-${id}`);
+    if (wrap && !wrap.contains(e.target)) dd.style.display = 'none';
+  });
+});
+
+const EXCHANGES_LIST = Object.keys(EXCHANGE_ICONS);
+
+function toggleExchMp() {
+  const dd  = document.getElementById('exch-dd-mp');
+  const cur = document.getElementById('mp-exchange').value;
+  if (dd.style.display === 'none') {
+    dd.innerHTML = EXCHANGES_LIST.map(name => `
+      <div onclick="selectExchMp('${name}')"
+        style="display:flex;align-items:center;gap:8px;padding:9px 12px;font-size:14px;cursor:pointer;background:${name===cur?'#f5f5f3':'#fff'}"
+        onmouseover="this.style.background='#f5f5f3'" onmouseout="this.style.background='${name===cur?'#f5f5f3':'#fff'}'">
+        <img src="${exchIcon(name)}" style="width:16px;height:16px" />${name}
+      </div>`).join('');
+    dd.style.display = 'block';
+  } else {
+    dd.style.display = 'none';
+  }
+}
+
+function selectExchMp(name) {
+  document.getElementById('mp-exchange').value   = name;
+  document.getElementById('exch-txt-mp').textContent = name;
+  document.getElementById('exch-icon-mp').src    = exchIcon(name);
+  document.getElementById('exch-dd-mp').style.display = 'none';
+}
+
+document.addEventListener('click', e => {
+  const wrap = document.getElementById('exch-wrap-mp');
+  if (wrap && !wrap.contains(e.target)) {
+    const dd = document.getElementById('exch-dd-mp');
+    if (dd) dd.style.display = 'none';
+  }
+});
+
+function updatePurchaseField(projectId, purchaseId, field, val) {
+  const p = state.projects.find(x => x.id === projectId);
+  if (!p) return;
+  const pur = p.purchases.find(x => x.id === purchaseId);
+  if (!pur || pur.bought) return;
+  if (field === 'amount') {
+    // Пользователь вручную задал сумму — фиксируем
+    pur.customAmount = val === '' ? null : parseFloat(val);
+  } else {
+    pur[field] = val;
+  }
+  save();
+}
+
+function toggleBought(projectId, purchaseId) {
+  const p = state.projects.find(x => x.id === projectId);
+  if (!p) return;
+  const pur = p.purchases.find(x => x.id === purchaseId);
+  if (!pur || pur.bought) return; // только откупить, не снимать
+
+  const amt = getAmount(p, pur);
+  const free = freeCash();
+  if (amt > free + 0.01) {
+    alert(`Недостаточно свободных средств!\nНужно: $${amt.toFixed(2)}\nДоступно: $${free.toFixed(2)}`);
+    return;
+  }
+  pur.bought = true;
+  pur.customAmount = amt;
+  save();
+  rerenderProject(projectId);
+}
+
+// Редактирование откупленной закупки
+let editBoughtCtx = null;
+function editBought(projectId, purchaseId) {
+  const p = state.projects.find(x => x.id === projectId);
+  if (!p) return;
+  const pur = p.purchases.find(x => x.id === purchaseId);
+  if (!pur) return;
+  editBoughtCtx = { projectId, purchaseId };
+  document.getElementById('eb-date').value   = pur.date   || '';
+  document.getElementById('eb-price').value  = pur.price  || '';
+  document.getElementById('eb-amount').value = pur.customAmount != null ? pur.customAmount : '';
+  document.getElementById('modal-editbought').classList.add('open');
+}
+function saveEditBought() {
+  if (!editBoughtCtx) return;
+  const p   = state.projects.find(x => x.id === editBoughtCtx.projectId);
+  const pur = p?.purchases.find(x => x.id === editBoughtCtx.purchaseId);
+  if (!pur) return;
+  pur.date         = document.getElementById('eb-date').value;
+  pur.price        = document.getElementById('eb-price').value;
+  pur.customAmount = parseFloat(document.getElementById('eb-amount').value) || pur.customAmount;
+  save();
+  closeModal('modal-editbought');
+  rerenderProject(editBoughtCtx.projectId);
+  editBoughtCtx = null;
+}
+
+// Добавить новую закупку вручную
+function addPurchase(projectId) {
+  const p = state.projects.find(x => x.id === projectId);
+  if (!p) return;
+  p.purchases.push({
+    id: Date.now(),
+    pct: null,        // null = ручная закупка без %
+    date: '',
+    price: '',
+    customAmount: null,
+    bought: false,
+  });
+  save();
+  rerenderProject(projectId);
+}
+
+// Удалить закупку
+function deletePurchase(projectId, purchaseId) {
+  const p = state.projects.find(x => x.id === projectId);
+  if (!p) return;
+  const pur = p.purchases.find(x => x.id === purchaseId);
+  if (pur?.bought) { alert('Нельзя удалить откупленную закупку'); return; }
+  p.purchases = p.purchases.filter(x => x.id !== purchaseId);
+  save();
+  rerenderProject(projectId);
+}
+
+// Перерисовать только тело одного проекта (без сворачивания)
+function rerenderProject(projectId) {
+  const body = document.getElementById(`proj-body-${projectId}`);
+  if (!body) { renderPortfolio(); return; }
+  const wasOpen = body.classList.contains('open');
+  renderPortfolio();
+  // Восстанавливаем состояние открытости
+  const newBody = document.getElementById(`proj-body-${projectId}`);
+  const newIcon = document.getElementById(`proj-icon-${projectId}`);
+  if (newBody && wasOpen) {
+    newBody.classList.add('open');
+    if (newIcon) newIcon.textContent = '▲';
+  }
+}
+
+function deleteProject(id) {
+  const pwd = prompt('Введи пароль для удаления проекта:');
+  if (pwd === null) return;
+  if (pwd !== '7856') { alert('Неверный пароль'); return; }
+  state.projects = state.projects.filter(x => x.id !== id);
+  save(); renderAll();
+}
+
+// ─── ПРОДАЖА ──────────────────────────────────────────
+function openSellModal(projectId) {
+  const p = state.projects.find(x => x.id === projectId);
+  if (!p) return;
+  sellContext = { projectId };
+  const coins     = projectRemainingCoins(p);
+  const avg       = projectAvgPrice(p);
+  const invested  = projectTotalInvested(p);
+  document.getElementById('sell-info').innerHTML =
+    `<b>${p.name}</b> · Монет в наличии: ${coins.toFixed(6)}` +
+    (avg ? ` · Ср. цена входа: $${avg.toFixed(4)}` : '') +
+    (invested ? ` · Вложено: $${invested.toFixed(2)}` : '');
+  document.getElementById('sell-price').value = p.currentPrice || '';
+  document.getElementById('sell-pct').value   = 100;
+  document.getElementById('sell-preview').innerHTML = '';
+  document.getElementById('modal-sell').classList.add('open');
+  updateSellPreview();
+}
+
+function updateSellPreview() {
+  if (!sellContext) return;
+  const p = state.projects.find(x => x.id === sellContext.projectId);
+  if (!p) return;
+  const price    = parseFloat(document.getElementById('sell-price').value);
+  const pct      = parseFloat(document.getElementById('sell-pct').value) || 100;
+  const coins    = projectRemainingCoins(p);
+  const sellCoins = coins * (pct / 100);
+  const avg      = projectAvgPrice(p);
+  if (!price || !avg || !sellCoins) { document.getElementById('sell-preview').innerHTML = ''; return; }
+  const revenue  = sellCoins * price;
+  const cost     = sellCoins * avg;
+  const pnlUsd   = revenue - cost;
+  const pnlPct   = cost > 0 ? (pnlUsd / cost * 100) : 0;
+  const isPos    = pnlUsd >= 0;
+  document.getElementById('sell-preview').innerHTML = `
+    <div style="background:${isPos?'#F0FFF4':'#FFF5F5'};border-radius:8px;padding:10px 12px">
+      <div style="font-size:14px;font-weight:600;color:${isPos?'#276749':'#9B1C1C'};margin-bottom:4px">
+        ${isPos?'Прибыль':'Убыток'}: ${isPos?'+':''}$${pnlUsd.toFixed(2)} (${isPos?'+':''}${pnlPct.toFixed(2)}%)
+      </div>
+      <div style="font-size:12px;color:#888780">
+        Продаю: ${sellCoins.toFixed(6)} монет · Выручка: $${revenue.toFixed(2)} · Себестоимость: $${cost.toFixed(2)}
+      </div>
+    </div>`;
+}
+
+function confirmSell() {
+  if (!sellContext) return;
+  const p = state.projects.find(x => x.id === sellContext.projectId);
+  if (!p) return;
+  const price    = parseFloat(document.getElementById('sell-price').value);
+  const pct      = parseFloat(document.getElementById('sell-pct').value) || 100;
+  if (!price)    { alert('Введи цену продажи'); return; }
+  const coins    = projectRemainingCoins(p);
+  const sellCoins = coins * (pct / 100);
+  const avg      = projectAvgPrice(p);
+  const revenue  = sellCoins * price;
+  const cost     = avg ? sellCoins * avg : 0;
+  const pnlUsd   = revenue - cost;
+  if (!p.sells) p.sells = [];
+  p.sells.push({
+    id: Date.now(), date: new Date().toLocaleDateString('ru'),
+    price, pct, coins: sellCoins, revenue, pnlUsd,
+  });
+  closeModal('modal-sell');
+  sellContext = null;
+  save(); rerenderProject(p.id);
+}
+
+// ─── АВТОЦЕНА (Bybit API) ────────────────────────────
+async function fetchBybitPrice(symbol, category = 'spot') {
+  const res  = await fetch(`https://api.bybit.com/v5/market/tickers?category=${category}&symbol=${symbol}`);
+  const data = await res.json();
+  return data?.result?.list?.[0]?.lastPrice || null;
+}
+
+async function fetchPrice(projectId) {
+  const p = state.projects.find(x => x.id === projectId);
+  if (!p) return;
+  const btn = document.getElementById(`price-btn-${projectId}`);
+  if (btn) { btn.textContent = '...'; btn.disabled = true; }
+
+  // Варианты тикеров для перебора
+  const baseName = p.name.toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const savedTicker = (p.ticker || '').trim().toUpperCase();
+  const candidates = [];
+
+  // 1. Сохранённый тикер (spot)
+  if (savedTicker) candidates.push({ symbol: savedTicker, cat: 'spot' });
+  // 2. NAME + USDT (spot)
+  if (baseName && baseName + 'USDT' !== savedTicker) candidates.push({ symbol: baseName + 'USDT', cat: 'spot' });
+  // 3. Сохранённый тикер (linear — перп)
+  if (savedTicker) candidates.push({ symbol: savedTicker, cat: 'linear' });
+  // 4. NAME + USDT (linear)
+  if (baseName) candidates.push({ symbol: baseName + 'USDT', cat: 'linear' });
+  // 5. NAME + USDT перп с суффиксом
+  if (baseName) candidates.push({ symbol: baseName + 'PERP', cat: 'linear' });
+
+  try {
+    let price = null;
+    let usedSymbol = null;
+    for (const c of candidates) {
+      price = await fetchBybitPrice(c.symbol, c.cat);
+      if (price) { usedSymbol = c; break; }
+    }
+    if (price) {
+      p.currentPrice = price;
+      // Если нашли по другому тикеру — обновим сохранённый
+      if (usedSymbol && usedSymbol.symbol !== savedTicker) {
+        p.ticker = usedSymbol.symbol;
+      }
+      save(); rerenderProject(projectId);
+    } else {
+      alert(`Не удалось получить цену для "${p.name}".\nПерепробованы тикеры: ${candidates.map(c=>c.symbol+'('+c.cat+')').join(', ')}.\nПроверь тикер вручную.`);
+    }
+  } catch(e) {
+    alert('Ошибка сети. Проверь подключение к интернету.');
+  } finally {
+    if (btn) { btn.textContent = '↻'; btn.disabled = false; }
+  }
+}
+
+// Обновить цены всех проектов сразу
+async function fetchAllPrices() {
+  const btn  = document.getElementById('refresh-all-btn');
+  const icon = document.getElementById('refresh-icon');
+  btn.disabled = true;
+  icon.textContent = '⟳';
+  const projects = state.projects.filter(p => p.ticker || p.name);
+  let ok = 0, fail = 0;
+  for (const p of projects) {
+    const baseName = p.name.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const savedTicker = (p.ticker || '').trim().toUpperCase();
+    const candidates = [];
+    if (savedTicker) candidates.push({ symbol: savedTicker, cat: 'spot' });
+    if (baseName && baseName + 'USDT' !== savedTicker) candidates.push({ symbol: baseName + 'USDT', cat: 'spot' });
+    if (savedTicker) candidates.push({ symbol: savedTicker, cat: 'linear' });
+    if (baseName) candidates.push({ symbol: baseName + 'USDT', cat: 'linear' });
+    try {
+      let price = null, usedSymbol = null;
+      for (const c of candidates) {
+        price = await fetchBybitPrice(c.symbol, c.cat);
+        if (price) { usedSymbol = c; break; }
+      }
+      if (price) {
+        p.currentPrice = price;
+        if (usedSymbol && usedSymbol.symbol !== savedTicker) p.ticker = usedSymbol.symbol;
+        ok++;
+      } else fail++;
+    } catch(e) { fail++; }
+  }
+  save(); renderPortfolio();
+  icon.textContent = '↻';
+  btn.disabled = false;
+  btn.title = `Обновлено: ${ok} · Ошибок: ${fail} · ${new Date().toLocaleTimeString('ru')}`;
+}
+
+// ─── DCA HELPER: сумма для снижения средней ──────────
+// Текущая средняя = avg, куплено coins монет на сумму invested
+// Новая закупка по цене newPrice на сумму S
+// Новая средняя = (invested + S) / (coins + S/newPrice)
+// Чтобы новая средняя = newPrice: S = coins * avg - coins * newPrice
+// Это отрицательно если newPrice > avg (покупаем выше средней — не имеет смысла)
+// Если newPrice < avg: S = coins * (avg - newPrice) — это сумма чтобы средняя стала = newPrice
+function dcaKeepAvgAmount(p, newPrice) {
+  const coins = projectTotalCoins(p);
+  const avg   = projectAvgPrice(p);
+  const price = parseFloat(newPrice);
+  if (!coins || !avg || !price) return null;
+  if (price >= avg) return null; // цена выше средней — снижать некуда
+  // Сумма чтобы СНИЗИТЬ среднюю до newPrice
+  return coins * (avg - price);
+}
+function renderPortfolio() {
+  const dep = totalDeposit();
+  document.getElementById('header-balance').textContent = `Депозит: $${dep.toFixed(2)}`;
+
+  const totalInvested = totalInvestedAll();
+  const free = freeCash();
+  const freePct = dep > 0 ? (free / dep * 100).toFixed(1) : 0;
+
+  // PnL: нереализованный (по текущей цене) + реализованный (продажи)
+  let totalUnrealised = 0, totalRealised = 0, totalCurVal = 0;
+  state.projects.forEach(p => {
+    const pnl = projectPnl(p);
+    if (pnl) { totalUnrealised += pnl.unrealised; totalRealised += pnl.realised; }
+    const rem = projectRemainingCoins(p);
+    const cur = parseFloat(p.currentPrice);
+    if (rem > 0 && cur > 0) totalCurVal += rem * cur;
+  });
+  const totalPnlUsd = totalUnrealised + totalRealised;
+
+  document.getElementById('summary-bar').innerHTML = `
+    <div class="summary-card"><div class="summary-label">Свободно</div><div class="summary-val ${free < 0 ? 'red' : ''}">$${free.toFixed(2)} <span style="font-size:12px;font-weight:400;color:#888780">(${freePct}%)</span></div></div>
+    <div class="summary-card"><div class="summary-label">Инвестировано</div><div class="summary-val">$${totalInvested.toFixed(2)}</div></div>
+    <div class="summary-card"><div class="summary-label">PnL всего</div><div class="summary-val ${totalPnlUsd>=0?'green':'red'}">${totalPnlUsd>=0?'+':''}$${totalPnlUsd.toFixed(2)}<div style="font-size:11px;font-weight:400;color:#888780">${totalUnrealised>=0?'+':''}$${totalUnrealised.toFixed(0)} незакр · ${totalRealised>=0?'+':''}$${totalRealised.toFixed(0)} закр</div></div></div>
+  `;
+
+  // Groups
+  const container = document.getElementById('groups-container');
+  container.innerHTML = ['low','mid','high'].map(g => {
+    const projects = state.projects.filter(p => p.group === g);
+    const budget = groupBudget(g);
+    const perProj = projectBudget(g);
+
+    const projectsHtml = projects.map(p => {
+      const avg = projectAvgPrice(p);
+      const pnl = projectPnl(p);
+      const invested = projectTotalInvested(p);
+
+      const purchasesHtml = p.purchases.map((pur, idx) => {
+        const isBought  = pur.bought;
+        const amount    = getAmount(p, pur);
+        const isCustom  = pur.customAmount !== null && pur.customAmount !== '';
+        const isManual  = pur.pct === null;
+        const coins     = pur.price && amount ? (amount / parseFloat(pur.price)).toFixed(6) : null;
+        const amountHint = !isBought && !isCustom && !isManual
+          ? `<span title="Авто от бюджета" style="font-size:10px;color:#888780;cursor:help"> авто</span>` : '';
+
+        // Динамический % = сумма этой закупки / сумма всех закупок проекта × 100
+        // Считаем общую сумму всех строк (купленных и некупленных) для нормализации
+        const allAmounts = p.purchases.reduce((s, x) => s + getAmount(p, x), 0);
+        const dynPct = allAmounts > 0 && amount > 0
+          ? Math.round(amount / allAmounts * 100)
+          : (pur.pct || 0);
+        const pctColor = dynPct <= 25 ? '#1D4ED8' : dynPct <= 40 ? '#15803D' : '#C2410C';
+        const pctBg    = dynPct <= 25 ? '#EFF6FF' : dynPct <= 40 ? '#F0FDF4' : '#FFF7ED';
+        const stageLabel = `<span style="display:inline-block;font-size:11px;padding:2px 7px;border-radius:12px;font-weight:500;background:${pctBg};color:${pctColor}">${dynPct}%</span>`;
+
+        return `<tr class="${isBought ? 'bought-row' : ''}">
+          <td>${stageLabel}</td>
+          <td><input type="date" value="${pur.date||''}" ${isBought?'disabled':''} onchange="updatePurchaseField(${p.id},${pur.id},'date',this.value)" /></td>
+          <td><input type="number" value="${pur.price||''}" placeholder="Цена" ${isBought?'disabled':''}
+            oninput="liveCoins(this,${p.id},${pur.id})"
+            onchange="updatePurchaseField(${p.id},${pur.id},'price',this.value)" />
+          </td>
+          <td>
+            <input type="number" value="${amount > 0 ? amount.toFixed(2) : ''}" placeholder="Сумма" ${isBought?'disabled':''}
+              oninput="liveCoins(this,${p.id},${pur.id})"
+              onchange="updatePurchaseField(${p.id},${pur.id},'amount',this.value)"
+              style="${!isBought&&!isCustom&&!isManual?'color:#888780':''}" />
+            ${amountHint}
+          </td>
+          <td style="color:#888780;font-size:12px" id="coins-${p.id}-${pur.id}">
+            ${coins ? `${coins} ${p.name}` : '—'}
+          </td>
+          <td class="check-cell">
+            ${isBought
+              ? `<button onclick="event.stopPropagation();editBought(${p.id},${pur.id})" title="Редактировать" style="background:none;border:none;cursor:pointer;font-size:15px;padding:0 4px;color:#888780">✏️</button>`
+              : `<button onclick="event.stopPropagation();toggleBought(${p.id},${pur.id})" title="Отметить как откуплено"
+                  style="width:18px;height:18px;border-radius:4px;border:1.5px solid #d3d1c7;background:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;font-size:11px">
+                </button>`
+            }
+          </td>
+          <td>
+            ${!isBought ? `<button onclick="event.stopPropagation();deletePurchase(${p.id},${pur.id})" style="background:none;border:none;color:#d3d1c7;cursor:pointer;font-size:14px;padding:0 4px" title="Удалить">✕</button>` : ''}
+          </td>
+        </tr>`;
+      }).join('');
+
+      // История продаж
+      const sellsHtml = (p.sells||[]).length ? `
+        <div style="margin-top:12px;border-top:0.5px solid #ebebeb;padding-top:10px">
+          <div style="font-size:12px;font-weight:500;color:#888780;margin-bottom:6px">История продаж</div>
+          ${(p.sells||[]).map(s => `
+            <div style="display:flex;gap:10px;font-size:12px;padding:5px 0;border-bottom:0.5px solid #f5f5f3;align-items:center">
+              <span style="color:#888780">${s.date}</span>
+              <span>${s.coins.toFixed(4)} монет × $${parseFloat(s.price).toFixed(4)}</span>
+              <span style="color:#888780">${s.pct}% позиции</span>
+              <span style="font-weight:500;color:${s.pnlUsd>=0?'#276749':'#9B1C1C'}">${s.pnlUsd>=0?'+':''}$${s.pnlUsd.toFixed(2)}</span>
+            </div>`).join('')}
+          <div style="font-size:12px;font-weight:500;margin-top:6px">
+            Реализовано: <span style="color:${projectSellsPnl(p)>=0?'#276749':'#9B1C1C'}">${projectSellsPnl(p)>=0?'+':''}$${projectSellsPnl(p).toFixed(2)}</span>
+          </div>
+        </div>` : '';
+
+      const remCoins = projectRemainingCoins(p);
+      const budget   = projectBudget(p.group, p.id);
+      const depTotal = totalDeposit();
+      const allocPct = depTotal > 0 ? (invested / depTotal * 100).toFixed(1) : 0;
+      const curPrice = parseFloat(p.currentPrice);
+
+      // Подсветка зелёным: текущая цена ≤ цене хотя бы одной откупленной закупки
+      // Если нет откупленных — подсвечиваем когда цена ≤ хотя бы одной запланированной закупки
+      const isGreenZone = (() => {
+        if (!curPrice || curPrice <= 0) return false;
+        // Смотрим по каждой откупленной закупке с указанной ценой
+        const boughtPrices = p.purchases
+          .filter(x => x.bought && parseFloat(x.price) > 0)
+          .map(x => parseFloat(x.price));
+        if (boughtPrices.length > 0) {
+          return boughtPrices.some(bp => curPrice <= bp);
+        }
+        // Нет откупленных — проверяем запланированные
+        const openPrices = p.purchases
+          .filter(x => !x.bought && parseFloat(x.price) > 0)
+          .map(x => parseFloat(x.price));
+        return openPrices.length > 0 && openPrices.some(op => curPrice <= op);
+      })();
+
+      return `<div class="project-card" draggable="true"
+        data-project-id="${p.id}"
+        ondragstart="onDragStart(event,${p.id})"
+        ondragend="onDragEnd(event)"
+        style="${isGreenZone ? 'border-color:#9AE6B4;' : ''}">
+        <div class="drop-indicator"></div>
+        <div class="project-header" onclick="toggleProject(${p.id})"
+          style="${isGreenZone ? 'background:#F0FFF4;' : ''}">
+          <span style="cursor:grab;color:#d3d1c7;font-size:16px;margin-right:2px" title="Перетащи в другую группу"
+            onmousedown="_dragAllowed=true" onmouseup="_dragAllowed=false">⠿</span>
+          <span class="project-name">${p.name}</span>
+          ${isGreenZone ? `<span style="font-size:11px;background:#C6F6D5;color:#276749;padding:2px 6px;border-radius:6px;font-weight:500">↓ Цена входа</span>` : ''}
+          ${p.exchange ? `<span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;color:#5F5E5A;background:#f1efe8;padding:2px 7px;border-radius:6px"><img src="${exchIcon(p.exchange)}" style="width:12px;height:12px">${p.exchange}</span>` : ''}
+          <span class="project-alloc">$${budget.toFixed(0)} план · $${invested.toFixed(0)} влож. · ${allocPct}% депозита</span>
+          ${pnl ? `<span class="project-pnl ${pnl.usd>=0?'pos':'neg'}">${pnl.usd>=0?'+':''}$${pnl.usd.toFixed(2)} (${pnl.pct.toFixed(1)}%)</span>` : ''}
+          <span class="project-toggle" id="proj-icon-${p.id}">▼</span>
+        </div>
+        <div class="project-body" id="proj-body-${p.id}">
+          <div class="price-row">
+            <label>Текущая цена:</label>
+            <input type="number" value="${p.currentPrice||''}" placeholder="Введи цену" oninput="updateCurrentPrice(${p.id},this.value)" onchange="updateCurrentPrice(${p.id},this.value)" style="width:130px" />
+            <button id="price-btn-${p.id}" class="btn" style="font-size:12px;padding:5px 10px" onclick="fetchPrice(${p.id})" title="Получить цену с Bybit">↻ Bybit</button>
+            <input type="text" value="${p.ticker||''}" placeholder="Тикер (BTCUSDT)" title="Тикер для Bybit API"
+              onchange="updateTicker(${p.id},this.value)"
+              style="width:110px;padding:5px 8px;font-size:12px;border-radius:6px;border:0.5px solid #d3d1c7;font-family:inherit;color:#888780" />
+            ${avg ? `<span class="price-stat ${curPrice && curPrice>=avg?'pos':'neg'}">Ср. вход: $${avg.toFixed(4)}</span>` : ''}
+            ${(() => {
+              if (remCoins <= 0) return '';
+              const remUsd = curPrice > 0 ? ` · $${(remCoins * curPrice).toFixed(2)}` : '';
+              return `<span style="font-size:12px;color:#888780">Остаток: ${remCoins.toFixed(4)} ${p.name}${remUsd}</span>`;
+            })()}
+            ${pnl ? `<span class="price-stat ${pnl.usd>=0?'pos':'neg'}">${pnl.pct>=0?'+':''}${pnl.pct.toFixed(1)}%</span>` : ''}
+            ${remCoins > 0 ? `<button class="btn" style="font-size:12px;background:#FFF3CD;border-color:#FFDA6A;color:#856404" onclick="openSellModal(${p.id})">Продать</button>` : ''}
+            <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
+              <div style="position:relative" id="exch-wrap-${p.id}">
+                <button class="btn" style="font-size:12px;display:flex;align-items:center;gap:4px" onclick="event.stopPropagation();toggleExchProject(${p.id})" title="Изменить биржу">
+                  ${p.exchange ? `<img src="${exchIcon(p.exchange)}" style="width:12px;height:12px" />` : ''}
+                  ${p.exchange || 'Биржа'} ▾
+                </button>
+                <div id="exch-dd-${p.id}" style="display:none;position:absolute;right:0;top:calc(100% + 4px);background:#fff;border:0.5px solid #d3d1c7;border-radius:8px;z-index:100;min-width:140px;box-shadow:0 4px 12px rgba(0,0,0,0.08)"></div>
+              </div>
+              <button class="btn" style="font-size:12px;color:#9B1C1C;border-color:#FCA5A5" onclick="deleteProject(${p.id})">Удалить</button>
+            </div>
+          </div>
+          <table class="purchases-table">
+            <thead><tr>
+              <th>Этап</th><th>Дата</th><th>Цена закупки</th><th>Сумма ($)</th><th>Количество</th><th>Откуплено</th><th></th>
+            </tr></thead>
+            <tbody>${purchasesHtml}</tbody>
+            <tfoot><tr><td colspan="7" style="padding:8px 0">
+              <button class="btn" style="font-size:12px;width:100%" onclick="addPurchase(${p.id})">+ Добавить закупку</button>
+            </td></tr></tfoot>
+          </table>
+          ${sellsHtml}
+        </div>
+        <div class="drop-indicator-bottom"></div>
+      </div>`;
+    }).join('') || `<div style="font-size:13px;color:#888780;padding:0.5rem 0">Проектов нет — добавь первый</div>`;
+
+    return `<div class="group-section">
+      <div class="group-header">
+        <span class="group-dot" style="background:${GROUP_DOTS[g]}"></span>
+        <h2>${GROUP_LABELS[g]}</h2>
+        <span class="group-meta">${state.risk[g].pct}% · $${budget.toFixed(0)} · ${projects.length}/${state.risk[g].count} проектов · $${perProj.toFixed(0)}/проект</span>
+        <button class="btn btn-add-project" onclick="openAddProjectModal('${g}')">+ Проект</button>
+      </div>
+      <div class="group-drop-zone" id="drop-${g}"
+        ondragover="onDragOver(event,'${g}')"
+        ondragleave="onDragLeave(event,'${g}')"
+        ondrop="onDrop(event,'${g}')">
+        ${projectsHtml}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ─── TABS ─────────────────────────────────────────────
+function switchTab(t) {
+  document.querySelectorAll('.tab').forEach((el,i) => el.classList.toggle('active', ['portfolio','setup','txs','analytics'][i] === t));
+  document.querySelectorAll('.section').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + t).classList.add('active');
+  if (t === 'setup')     renderSetup();
+  if (t === 'txs')       renderTxs();
+  if (t === 'portfolio') renderPortfolio();
+  if (t === 'analytics') renderAnalytics();
+}
+
+function renderAnalytics() {
+  const el  = document.getElementById('analytics-content');
+  const dep = totalDeposit();
+  const totalInv = totalInvestedAll();
+  const free = freeCash();
+
+  // По группам
+  const groupRows = ['low','mid','high'].map(g => {
+    const projects  = state.projects.filter(p => p.group === g);
+    const invested  = projects.reduce((s,p) => s + projectTotalInvested(p), 0);
+    const curVal    = projects.reduce((s,p) => {
+      const r = projectRemainingCoins(p), c = parseFloat(p.currentPrice);
+      return s + (r > 0 && c > 0 ? r * c : 0);
+    }, 0);
+    const pnlUsd    = projects.reduce((s,p) => { const pnl=projectPnl(p); return s+(pnl?pnl.usd:0); },0);
+    const allocPct  = dep > 0 ? (invested/dep*100).toFixed(1) : 0;
+    const planPct   = state.risk[g].pct;
+    return { g, invested, curVal, pnlUsd, allocPct, planPct, count: projects.length };
+  });
+
+  // По проектам — топ по PnL
+  const projectRows = state.projects.map(p => {
+    const pnl     = projectPnl(p);
+    const invested = projectTotalInvested(p);
+    const allocPct = dep > 0 ? (invested/dep*100).toFixed(1) : 0;
+    const rem      = projectRemainingCoins(p);
+    const cur      = parseFloat(p.currentPrice);
+    const curVal   = rem > 0 && cur > 0 ? rem * cur : 0;
+    return { p, pnl, invested, allocPct, curVal };
+  }).sort((a,b) => (b.pnl?.usd||0) - (a.pnl?.usd||0));
+
+  // Реализованный PnL
+  const totalRealised = state.projects.reduce((s,p) => s + projectSellsPnl(p), 0);
+  const totalSells    = state.projects.reduce((s,p) => s + (p.sells||[]).length, 0);
+
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:1.5rem">
+      <div class="summary-card"><div class="summary-label">Депозит</div><div class="summary-val">$${dep.toFixed(2)}</div></div>
+      <div class="summary-card"><div class="summary-label">Инвестировано</div><div class="summary-val">$${totalInv.toFixed(2)} <span style="font-size:12px;color:#888780">(${dep>0?(totalInv/dep*100).toFixed(1):0}%)</span></div></div>
+      <div class="summary-card"><div class="summary-label">Свободно</div><div class="summary-val ${free<0?'red':''}">$${free.toFixed(2)}</div></div>
+      <div class="summary-card"><div class="summary-label">Реализовано</div><div class="summary-val ${totalRealised>=0?'green':'red'}">${totalRealised>=0?'+':''}$${totalRealised.toFixed(2)} <span style="font-size:12px;color:#888780">(${totalSells} продаж)</span></div></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:2rem">
+      <div style="background:#fff;border:0.5px solid #d3d1c7;border-radius:12px;padding:1rem">
+        <div style="font-size:13px;font-weight:500;margin-bottom:12px">Распределение по группам</div>
+        <div style="position:relative;height:200px"><canvas id="chart-groups"></canvas></div>
+        <div id="legend-groups" style="margin-top:10px;font-size:12px;color:#888780;display:flex;flex-direction:column;gap:3px"></div>
+      </div>
+      <div style="background:#fff;border:0.5px solid #d3d1c7;border-radius:12px;padding:1rem">
+        <div style="font-size:13px;font-weight:500;margin-bottom:12px">Инвестировано по проектам</div>
+        <div style="position:relative;height:200px"><canvas id="chart-projects"></canvas></div>
+        <div id="legend-projects" style="margin-top:10px;font-size:12px;color:#888780;display:flex;flex-wrap:wrap;gap:6px"></div>
+      </div>
+    </div>
+
+    <div style="font-size:14px;font-weight:500;margin-bottom:10px">Распределение по группам</div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:1.5rem">
+      <thead><tr style="border-bottom:0.5px solid #d3d1c7">
+        <th style="text-align:left;padding:7px 8px;font-size:11px;color:#888780;font-weight:500">Группа</th>
+        <th style="text-align:left;padding:7px 8px;font-size:11px;color:#888780;font-weight:500">Проектов</th>
+        <th style="text-align:right;padding:7px 8px;font-size:11px;color:#888780;font-weight:500">План %</th>
+        <th style="text-align:right;padding:7px 8px;font-size:11px;color:#888780;font-weight:500">Факт %</th>
+        <th style="text-align:right;padding:7px 8px;font-size:11px;color:#888780;font-weight:500">Инвестировано</th>
+        <th style="text-align:right;padding:7px 8px;font-size:11px;color:#888780;font-weight:500">PnL</th>
+      </tr></thead>
+      <tbody>
+        ${groupRows.map(r => `<tr style="border-bottom:0.5px solid #f5f5f3">
+          <td style="padding:7px 8px"><span style="display:flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:50%;background:${GROUP_DOTS[r.g]};display:inline-block"></span>${GROUP_LABELS[r.g]}</span></td>
+          <td style="padding:7px 8px">${r.count}</td>
+          <td style="padding:7px 8px;text-align:right;color:#888780">${r.planPct}%</td>
+          <td style="padding:7px 8px;text-align:right"><span style="color:${Math.abs(r.allocPct-r.planPct)>5?'#9B1C1C':'#1a1a1a'}">${r.allocPct}%</span></td>
+          <td style="padding:7px 8px;text-align:right">$${r.invested.toFixed(2)}</td>
+          <td style="padding:7px 8px;text-align:right;color:${r.pnlUsd>=0?'#276749':'#9B1C1C'};font-weight:500">${r.pnlUsd>=0?'+':''}$${r.pnlUsd.toFixed(2)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+
+    <div style="font-size:14px;font-weight:500;margin-bottom:10px">Проекты — по PnL</div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:1.5rem">
+      <thead><tr style="border-bottom:0.5px solid #d3d1c7">
+        <th style="text-align:left;padding:7px 8px;font-size:11px;color:#888780;font-weight:500">Проект</th>
+        <th style="text-align:left;padding:7px 8px;font-size:11px;color:#888780;font-weight:500">Группа</th>
+        <th style="text-align:right;padding:7px 8px;font-size:11px;color:#888780;font-weight:500">Факт %</th>
+        <th style="text-align:right;padding:7px 8px;font-size:11px;color:#888780;font-weight:500">Инвестировано</th>
+        <th style="text-align:right;padding:7px 8px;font-size:11px;color:#888780;font-weight:500">Нереализов.</th>
+        <th style="text-align:right;padding:7px 8px;font-size:11px;color:#888780;font-weight:500">Реализов.</th>
+        <th style="text-align:right;padding:7px 8px;font-size:11px;color:#888780;font-weight:500">PnL итого</th>
+      </tr></thead>
+      <tbody>
+        ${projectRows.map(({p, pnl, invested, allocPct}) => `<tr style="border-bottom:0.5px solid #f5f5f3">
+          <td style="padding:7px 8px;font-weight:500">${p.name}</td>
+          <td style="padding:7px 8px;color:#888780">${GROUP_LABELS[p.group]}</td>
+          <td style="padding:7px 8px;text-align:right">${allocPct}%</td>
+          <td style="padding:7px 8px;text-align:right">$${invested.toFixed(2)}</td>
+          <td style="padding:7px 8px;text-align:right;color:${(pnl?.unrealised||0)>=0?'#276749':'#9B1C1C'}">${pnl?(pnl.unrealised>=0?'+':'')+'$'+pnl.unrealised.toFixed(2):'—'}</td>
+          <td style="padding:7px 8px;text-align:right;color:${projectSellsPnl(p)>=0?'#276749':'#9B1C1C'}">${projectSellsPnl(p)!==0?(projectSellsPnl(p)>=0?'+':'')+'$'+projectSellsPnl(p).toFixed(2):'—'}</td>
+          <td style="padding:7px 8px;text-align:right;font-weight:500;color:${(pnl?.usd||0)>=0?'#276749':'#9B1C1C'}">${pnl?(pnl.usd>=0?'+':'')+'$'+pnl.usd.toFixed(2):'—'}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+
+    ${totalSells > 0 ? `
+    <div style="font-size:14px;font-weight:500;margin-bottom:10px">История продаж</div>
+    <table style="width:100%;border-collapse:collapse;font-size:13px">
+      <thead><tr style="border-bottom:0.5px solid #d3d1c7">
+        <th style="text-align:left;padding:7px 8px;font-size:11px;color:#888780;font-weight:500">Дата</th>
+        <th style="text-align:left;padding:7px 8px;font-size:11px;color:#888780;font-weight:500">Проект</th>
+        <th style="text-align:right;padding:7px 8px;font-size:11px;color:#888780;font-weight:500">Монет</th>
+        <th style="text-align:right;padding:7px 8px;font-size:11px;color:#888780;font-weight:500">Цена</th>
+        <th style="text-align:right;padding:7px 8px;font-size:11px;color:#888780;font-weight:500">Выручка</th>
+        <th style="text-align:right;padding:7px 8px;font-size:11px;color:#888780;font-weight:500">PnL</th>
+      </tr></thead>
+      <tbody>
+        ${state.projects.flatMap(p => (p.sells||[]).map(s => ({...s, name: p.name})))
+          .sort((a,b) => b.id - a.id)
+          .map(s => `<tr style="border-bottom:0.5px solid #f5f5f3">
+            <td style="padding:7px 8px;color:#888780">${s.date}</td>
+            <td style="padding:7px 8px;font-weight:500">${s.name}</td>
+            <td style="padding:7px 8px;text-align:right">${parseFloat(s.coins).toFixed(4)}</td>
+            <td style="padding:7px 8px;text-align:right">$${parseFloat(s.price).toFixed(4)}</td>
+            <td style="padding:7px 8px;text-align:right">$${parseFloat(s.revenue).toFixed(2)}</td>
+            <td style="padding:7px 8px;text-align:right;font-weight:500;color:${s.pnlUsd>=0?'#276749':'#9B1C1C'}">${s.pnlUsd>=0?'+':''}$${parseFloat(s.pnlUsd).toFixed(2)}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>` : ''}
+  `;
+
+  // Рисуем диаграммы после рендера DOM
+  setTimeout(() => {
+    // Диаграмма групп (пончик)
+    const cgCtx = document.getElementById('chart-groups')?.getContext('2d');
+    if (cgCtx && groupRows.some(r => r.invested > 0)) {
+      if (window._cgChart) window._cgChart.destroy();
+      const colors = ['#48BB78','#F6AD55','#FC8181'];
+      window._cgChart = new Chart(cgCtx, {
+        type: 'doughnut',
+        data: {
+          labels: groupRows.map(r => GROUP_LABELS[r.g]),
+          datasets: [{ data: groupRows.map(r => r.invested), backgroundColor: colors, borderWidth: 0 }]
+        },
+        options: { responsive:true, maintainAspectRatio:false, cutout:'65%', animation:false, plugins:{ legend:{display:false} } }
+      });
+      document.getElementById('legend-groups').innerHTML = groupRows.map((r,i) =>
+        `<span style="display:flex;align-items:center;gap:5px"><span style="width:8px;height:8px;border-radius:2px;background:${colors[i]};display:inline-block"></span>${GROUP_LABELS[r.g]}: $${r.invested.toFixed(0)} (${r.allocPct}%)</span>`
+      ).join('');
+    }
+
+    // Диаграмма проектов (горизонтальный бар)
+    const cpCtx = document.getElementById('chart-projects')?.getContext('2d');
+    if (cpCtx && projectRows.some(r => r.invested > 0)) {
+      if (window._cpChart) window._cpChart.destroy();
+      const palette = ['#48BB78','#F6AD55','#FC8181','#63B3ED','#B794F4','#F687B3','#68D391','#FBD38D','#FC8181','#90CDF4'];
+      const visibleRows = projectRows.filter(r => r.invested > 0).slice(0, 10);
+      window._cpChart = new Chart(cpCtx, {
+        type: 'bar',
+        data: {
+          labels: visibleRows.map(r => r.p.name),
+          datasets: [{ data: visibleRows.map(r => r.invested), backgroundColor: palette, borderWidth:0, borderRadius:4 }]
+        },
+        options: {
+          responsive:true, maintainAspectRatio:false, animation:false,
+          indexAxis:'y',
+          plugins:{ legend:{display:false}, tooltip:{ callbacks:{ label: c => ` $${c.raw.toFixed(2)}` } } },
+          scales:{ x:{ grid:{display:false}, ticks:{font:{size:11}} }, y:{ grid:{display:false}, ticks:{font:{size:11}} } }
+        }
+      });
+      document.getElementById('legend-projects').innerHTML = visibleRows.map((r,i) =>
+        `<span style="display:flex;align-items:center;gap:4px"><span style="width:8px;height:8px;border-radius:2px;background:${palette[i]};display:inline-block"></span>${r.p.name}</span>`
+      ).join('');
+    }
+  }, 50);
+}
+
+function renderAll() { renderPortfolio(); renderSetup(); renderTxs(); }
+
+// ─── INIT ─────────────────────────────────────────────
+load();
+renderAll();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<!-- ══════════ PWA: Service Worker + Install button ══════════ -->
+<button id="pwa-install-btn" style="display:none;position:fixed;bottom:16px;right:16px;z-index:9999;padding:12px 18px;background:#1a1a1a;color:#fff;border:none;border-radius:24px;font-family:inherit;font-size:14px;font-weight:500;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.18)">
+  ⬇ Установить приложение
+</button>
+<script>
+(function () {
+  'use strict';
+
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function () {
+      navigator.serviceWorker.register('sw.js')
+        .then(function (reg) {
+          console.log('[PWA] SW registered, scope:', reg.scope);
+          reg.addEventListener('updatefound', function () {
+            var nw = reg.installing;
+            if (!nw) return;
+            nw.addEventListener('statechange', function () {
+              if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+                nw.postMessage('SKIP_WAITING');
+              }
+            });
+          });
+        })
+        .catch(function (err) { console.warn('[PWA] SW registration failed:', err); });
+
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener('controllerchange', function () {
+        if (refreshing) return;
+        refreshing = true;
+        window.location.reload();
+      });
+    });
+  }
+
+  var deferredPrompt = null;
+  var btn = document.getElementById('pwa-install-btn');
+
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (btn) btn.style.display = 'block';
+  });
+
+  if (btn) {
+    btn.addEventListener('click', async function () {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      try { await deferredPrompt.userChoice; } catch (e) {}
+      deferredPrompt = null;
+      btn.style.display = 'none';
+    });
+  }
+
+  window.addEventListener('appinstalled', function () {
+    if (btn) btn.style.display = 'none';
+    deferredPrompt = null;
+  });
+
+  var isStandalone = window.matchMedia('(display-mode: standalone)').matches
+                  || window.navigator.standalone === true;
+  if (isStandalone && btn) btn.style.display = 'none';
+})();
+</script>
+
+</body>
+</html>
